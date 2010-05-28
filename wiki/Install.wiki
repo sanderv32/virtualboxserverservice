@@ -1,0 +1,16 @@
+#summary Install vbservice
+#labels Featured
+
+= Howto install/configure vbservice =
+
+For this service .NET 4 is used. You can download this from the Microsoft website.<br>
+The fastest way to get this program running is to download the .ini and the executable from the download page.<br>
+<br>
+Place the .ini file in the %SystemRoot% (normally c:\windows), and copy the executable to the %VBOX_INSTALL_PATH% path.<br>
+Run "vbservice -install" from this path to install the service on your computer.<br>
+<br>
+To configure a VM to start as a service use the vboxmanage command with<br>
+the setextradata options with key Service and value yes (example: vboxmanage setextradata OpenBSD Service yes).<br>
+
+= Uninstall vbservice =
+Just go to the directory where you have copied vbservice.exe and type "vbservice -uninstall".
