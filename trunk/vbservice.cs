@@ -1,16 +1,24 @@
+/**
+ * VirtualBox Server Service v2.0
+ *
+ * Version 2 uses the COM+ service of windows to start machines.
+ */
+
 using System;
 using System.Diagnostics;
 using System.ServiceProcess;
+using System.Collections;
 using System.Reflection;
 using System.Threading;
 using VirtualBox;
 
 namespace VBoxService
 {
-	class VBoxService : ServiceBase
+	sealed class VBoxService : ServiceBase
 	{
 		private bool isStopped = false;
-		private VirtualBox.Control vbox;
+		private VirtualBox.VirtualBox vbox;
+		private Array machines;
 
 		/// <summary>
 		/// Public Constructor for WindowsService.
@@ -29,7 +37,8 @@ namespace VBoxService
 			this.CanShutdown = true;
 			this.CanStop = true;
 
-			vbox = new VirtualBox.Control();
+			vbox = new VirtualBox.VirtualBox();
+			machines = (Array)vbox.Machines;
 		}
 
 		/// <summary>
@@ -40,28 +49,70 @@ namespace VBoxService
 		}
 
 		/// <summary>
+		/// </summary>
+		private void startvms() 
+		{
+			foreach(VirtualBox.IMachine m in machines) {
+				string xtrakeys = m.GetExtraData("Service");
+				if (xtrakeys.ToLower() == "yes") {
+					if (m.State==VirtualBox.MachineState.MachineState_PoweredOff || m.State==VirtualBox.MachineState.MachineState_Saved) {
+						this.EventLog.WriteEntry(String.Format("Starting VM {0} ({1})",m.Name,m.Id));
+						VirtualBox.Session session = new VirtualBox.Session();
+						try {
+							VirtualBox.IProgress progress = m.Parent.OpenRemoteSession(session, m.Id, "vrdp", "");
+							progress.WaitForCompletion(-1);
+						} catch (Exception e) {
+							this.EventLog.WriteEntry(String.Format("Error starting VM {0} ({1})\r\n\r\n{2}",m.Name,m.Id,e.ToString()),EventLogEntryType.Error);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// </summary>
+		private void stopvms() 
+		{
+			foreach(VirtualBox.IMachine m in machines) {
+				string xtrakeys = m.GetExtraData("Service");
+				if (xtrakeys.ToLower() == "yes") {
+					if (m.State==VirtualBox.MachineState.MachineState_Running) {
+						this.EventLog.WriteEntry(String.Format("Stopping VM {0} ({1})",m.Name,m.Id));
+						VirtualBox.Session session = new VirtualBox.Session();
+						try {
+							m.Parent.OpenExistingSession(session, m.Id);
+							session.Console.PowerDown().WaitForCompletion(-1);
+							session.Close();
+						} catch (Exception e) {
+							this.EventLog.WriteEntry(String.Format("Error stopping VM {0} ({1})\r\n\r\n{2}\r\n\r\n{3}",m.Name,m.Id,e.ToString(),m.State),EventLogEntryType.Error);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
 		/// The Main Thread: This is where your Service is Run.
 		/// </summary>
 		static void Main(string[] args)
 		{
-			VirtualBox.Control vbx;
+			VirtualBox.VirtualBox vbx;
 		
 			if (args.Length>0) {
 				if (args[0] == "-install") {
 					try {
 						System.Configuration.Install.ManagedInstallerClass.InstallHelper(new string[] { "/LogToConsole=false", Assembly.GetExecutingAssembly().Location }); 
-					} catch (Exception e) {
+					} catch {
 						Console.WriteLine("Unable to install server.");
 					}
 				} else if (args[0] == "-uninstall") {
 					try {
 						System.Configuration.Install.ManagedInstallerClass.InstallHelper(new string[] { "/u", "/LogToConsole=false", Assembly.GetExecutingAssembly().Location }); 
-					} catch (Exception e) {
+					} catch {
 						Console.WriteLine("Unable to uninstall server.");
 					}
 				} else if (args[0] == "-console") {
-					vbx = new VirtualBox.Control();
-					vbx.startvms();
+					vbx = new VirtualBox.VirtualBox();
 					while(true) {
 						Thread.Sleep(10000);
 					}
@@ -101,7 +152,7 @@ namespace VBoxService
 		protected override void OnStop()
 		{
 			this.isStopped=true;
-			vbox.stopvms();
+			this.stopvms();
 			base.OnStop();
 		}
 
@@ -132,7 +183,7 @@ namespace VBoxService
 		protected override void OnShutdown()
 		{
 			this.isStopped=true;
-			vbox.stopvms();
+			this.stopvms();
 			base.OnShutdown();
 		}
 
@@ -182,7 +233,7 @@ namespace VBoxService
 		/// </summary>
 		public void Start()
 		{
-			vbox.startvms();
+			this.startvms();
 			while(!this.isStopped)
 			{
 				Thread.Sleep(1000);
