@@ -32,8 +32,8 @@ namespace VirtualBox
 
 				if (GetPrivateProfileString("files","virtualbox_path","",buffer,256,"vbservice.ini")!=0) {
 						virtualbox_path = Environment.ExpandEnvironmentVariables(buffer.ToString());
-						if (virtualbox_path[virtualbox_path.Length-1] == '\\')
-							virtualbox_path=virtualbox_path.Substring(0,virtualbox_path.Length-1);
+						/*if (virtualbox_path[virtualbox_path.Length-1] == '\\')
+							virtualbox_path=virtualbox_path.Substring(0,virtualbox_path.Length-1);*/
 						Console.WriteLine("virtualbox_path={0}",virtualbox_path);
 				}
 				if (GetPrivateProfileString("files","vboxheadless.exe","",buffer,256,"vbservice.ini")!=0) {
@@ -65,7 +65,7 @@ namespace VirtualBox
 						try {
 							vboxcmd.StartInfo.EnvironmentVariables.Add("VBOX_USER_HOME",vbox_user_home);
 						} catch {}
-						vboxcmd.StartInfo.FileName = virtualbox_path+@"\"+vboxmanage;
+						vboxcmd.StartInfo.FileName = virtualbox_path+vboxmanage;
 						vboxcmd.StartInfo.WorkingDirectory = virtualbox_path;
 						//vboxcmd.StartInfo.Arguments = "controlvm "+this.listVMS[vbp.Id]+" poweroff";
 						vboxcmd.StartInfo.Arguments = "controlvm "+this.listVMS[vbp.Id]+" savestate";
@@ -85,7 +85,7 @@ namespace VirtualBox
 			{
 				XmlDocument vbConfig = new XmlDocument();
 
-				vbConfig.Load(this.vbox_user_home+@"\virtualbox.xml");
+				vbConfig.Load(this.vbox_user_home+@"virtualbox.xml");
 
 				foreach(XmlNode element in vbConfig.GetElementsByTagName("MachineEntry"))
 				{
@@ -109,7 +109,7 @@ namespace VirtualBox
 									try {
 										vboxcmd.StartInfo.EnvironmentVariables.Add("VBOX_USER_HOME",vbox_user_home);
 									} catch {}
-									vboxcmd.StartInfo.FileName = virtualbox_path+@"\"+vboxheadless;
+									vboxcmd.StartInfo.FileName = virtualbox_path+vboxheadless;
 									vboxcmd.StartInfo.WorkingDirectory = virtualbox_path;
 									vboxcmd.StartInfo.Arguments = "-s \""+uuid+"\" -v on";
 									vboxcmd.StartInfo.CreateNoWindow = true;
