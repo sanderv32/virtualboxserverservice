@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Collections;
 using System.Diagnostics;
 using System.ServiceProcess;
+using System.Runtime.InteropServices;
 
 using VirtualBox;
 
@@ -53,7 +54,21 @@ namespace VBoxService
 		~VBoxService()
 		{
 		}
-				
+
+		#region Console Window property stuff
+		[DllImport("kernel32.dll", ExactSpelling=true)]
+		private static extern IntPtr GetConsoleWindow();
+
+		private static IntPtr ThisConsole=GetConsoleWindow();
+        
+		[DllImport("user32.dll",CharSet=CharSet.Auto, SetLastError=true)]
+		private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+		private const int HIDE=0;
+		private const int MAXIMIZE=3;
+		private const int MINIMIZE=6;
+		private const int RESTORE=9;
+		#endregion
+
 		/// <summary>
 		/// Start the VM's where the extradata key is set
 		/// </summary>
@@ -125,13 +140,16 @@ namespace VBoxService
 					while(true) {
 						Thread.Sleep(10000);
 					}
-				} else
-					if (args[0] == "-tray") {
+				} else 	if (args[0] == "-tray") {
+						Console.Title = "VirtualBox Server Service TrayIcon";
+						ShowWindow(ThisConsole, HIDE);
 						SysTrayIcon systrayicon = new SysTrayIcon();
 						systrayicon.Run();
+						ShowWindow(ThisConsole, RESTORE);
 					}
-			} else
+			} else	{
 				ServiceBase.Run(new VBoxService());
+			}
 		}
 
 		/// <summary>
