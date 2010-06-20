@@ -30,7 +30,6 @@ namespace VBoxService
 			
 			this.menuitem = new System.Windows.Forms.ContextMenu();
 			for(int i=0; i<((Array)vbox.Machines).Length;i++) {
-				//this.menuitems.MenuItems.Add(m.Name, contextClick);
 				MenuItem menu = new MenuItem( vbox.Machines[i].Name);
 				menu.Click += contextClick;
 				menu.Tag = vbox.Machines[i].Id;
@@ -59,6 +58,7 @@ namespace VBoxService
 		
 		private void ExitSystray(object Sender, EventArgs e)
 		{
+			this.notifyIcon.Visible = false;
 			Application.Exit();
 		}
 		
