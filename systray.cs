@@ -42,6 +42,8 @@ namespace VBoxService
 				
 				this.menuitem.MenuItems.Add(menu);
 			}
+			this.menuitem.MenuItems.Add("-");
+			this.menuitem.MenuItems.Add("E&xit",ExitSystray);
 			
 			this.notifyIcon = new NotifyIcon();
 			this.notifyIcon.Icon = (System.Drawing.Icon)resources.GetObject("earth");
@@ -53,6 +55,11 @@ namespace VBoxService
 		public void Run()
 		{
 			Application.Run();
+		}
+		
+		private void ExitSystray(object Sender, EventArgs e)
+		{
+			Application.Exit();
 		}
 		
 		private void contextClick(object Sender, EventArgs e)
