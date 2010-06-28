@@ -365,17 +365,21 @@ namespace VBoxService
 		private VirtualBox.VirtualBox vbox;
 		private System.Windows.Forms.ContextMenu menuitem;
 		private StringBuilder extradatakey;
-		
+		private virtualboxcallback vboxcallback;
+				
 		public SysTrayIcon()
 		{
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
 			this.extradatakey = new StringBuilder(resources.GetString("VBoxService.ExtraDataKey"));
 			
 			vbox = new VirtualBox.VirtualBox();
+			vboxcallback = new virtualboxcallback(this);
+			vbox.RegisterCallback(vboxcallback);
 			
 			this.menuitem = new System.Windows.Forms.ContextMenu();
 			for(int i=0; i<((Array)vbox.Machines).Length;i++) {
 				MenuItem menu = new MenuItem( vbox.Machines[i].Name);
+				menu.Name = vbox.Machines[i].Name;
 				menu.Click += contextClick;
 				menu.Tag = vbox.Machines[i].Id;
 				
@@ -388,12 +392,37 @@ namespace VBoxService
 			}
 			this.menuitem.MenuItems.Add("-");
 			this.menuitem.MenuItems.Add("E&xit",ExitSystray);
-			
+					
 			this.notifyIcon = new NotifyIcon();
 			this.notifyIcon.Icon = (System.Drawing.Icon)resources.GetObject("earth");
 			this.notifyIcon.Visible = true;
 			this.notifyIcon.Text = resources.GetString("Application.Name");
 			this.notifyIcon.ContextMenu = this.menuitem;
+		}
+		
+		public void ChkMenuItem(string uuid, int reg)
+		{
+			int index;
+			
+			if (reg==1) {
+				/// <summary>
+				///  Find the break-line before the exit
+				/// </summary>
+				for(index=0; index<this.menuitem.MenuItems.Count;index++) {
+					if (this.menuitem.MenuItems[index].Text=="-") break;
+				}
+				
+				MenuItem menu = new MenuItem(vbox.GetMachine(uuid).Name);
+				menu.Click += contextClick;
+				menu.Tag = uuid;
+				this.menuitem.MenuItems.Add(index,menu);
+			} else {
+				for(int i=0; i<this.menuitem.MenuItems.Count; i++) {
+					if ((string)this.menuitem.MenuItems[i].Tag==(string)uuid) {
+						this.menuitem.MenuItems.Remove(this.menuitem.MenuItems[i]);
+					}
+				}
+			}
 		}
 		
 		public void Run()
