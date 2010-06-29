@@ -352,7 +352,9 @@ Public License instead of this License.
  */
 using System;
 using System.Text;
+using System.Drawing;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace VBoxService
 {
@@ -366,10 +368,10 @@ namespace VBoxService
 		private System.Windows.Forms.ContextMenu menuitem;
 		private StringBuilder extradatakey;
 		private virtualboxcallback vboxcallback;
+		private System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
 				
 		public SysTrayIcon()
 		{
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
 			this.extradatakey = new StringBuilder(resources.GetString("VBoxService.ExtraDataKey"));
 			
 			vbox = new VirtualBox.VirtualBox();
@@ -391,10 +393,11 @@ namespace VBoxService
 				this.menuitem.MenuItems.Add(menu);
 			}
 			this.menuitem.MenuItems.Add("-");
+			this.menuitem.MenuItems.Add("&About",AboutBox);
 			this.menuitem.MenuItems.Add("E&xit",ExitSystray);
 					
 			this.notifyIcon = new NotifyIcon();
-			this.notifyIcon.Icon = (System.Drawing.Icon)resources.GetObject("earth");
+			this.notifyIcon.Icon = (System.Drawing.Icon)resources.GetObject("icon");
 			this.notifyIcon.Visible = true;
 			this.notifyIcon.Text = resources.GetString("Application.Name");
 			this.notifyIcon.ContextMenu = this.menuitem;
@@ -428,6 +431,17 @@ namespace VBoxService
 		public void Run()
 		{
 			Application.Run();
+		}
+		
+		private void AboutBox(object Sender, EventArgs e)
+		{
+			About aboutbox = new About();
+			aboutbox.Icon  = new Icon((Icon)this.resources.GetObject("icon"),((Icon)this.resources.GetObject("icon")).Size);
+			aboutbox.pictureBox1.Image = new Bitmap((Bitmap)((Icon)resources.GetObject("icon")).ToBitmap());
+			aboutbox.label1.Text = String.Format(this.resources.GetString("About.Text"),
+			                                     this.resources.GetString("Application.Name"),
+			                                     Assembly.GetExecutingAssembly().GetName().Version.ToString());
+			aboutbox.Show();
 		}
 		
 		private void ExitSystray(object Sender, EventArgs e)
