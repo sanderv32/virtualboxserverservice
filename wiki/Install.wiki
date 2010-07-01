@@ -12,3 +12,7 @@ the setextradata options with key Service and value yes (example: vboxmanage set
 
 = Uninstall vbservice =
 Just go to the directory where you have copied vbservice.exe and type "vbservice -uninstall".
+
+= Tray Icon =
+New in version 2.1 is the trayicon. This can be activated bij executing the executable<br> with the -tray option. Note that on Vista/Windows7 you get an UAC warning,<br>
+to prevent this start it from the Task Scheduler at logon with highest privileges.
