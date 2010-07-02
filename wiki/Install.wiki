@@ -5,14 +5,19 @@
 
 For this service .NET 4 is used. You can download this from the Microsoft website.<br>
 <br>
-Run "vbservice -install" from this path to install the service on your computer.<br>
+Run
+<code>vbservice -install</code>
+from this path to install the service on your computer.<br>
 <br>
 To configure a VM to start as a service use the vboxmanage command with<br>
-the setextradata options with key Service and value yes (example: vboxmanage setextradata OpenBSD Service yes).<br>
+the setextradata options with key Service and value yes. Example:
+<code>vboxmanage setextradata OpenBSD Service yes</code>.<br>
 
 = Uninstall vbservice =
-Just go to the directory where you have copied vbservice.exe and type "vbservice -uninstall".
+Just go to the directory where you have copied vbservice.exe and type
+<code>vbservice -uninstall</code>
 
 = Tray Icon =
 New in version 2.1 is the trayicon. This can be activated bij executing the executable<br> with the -tray option. Note that on Vista/Windows7 you get an UAC warning,<br>
 to prevent this start it from the Task Scheduler at logon with highest privileges.
+<code>vboxservice -tray</code>
