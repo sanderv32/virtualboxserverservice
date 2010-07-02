@@ -10,7 +10,8 @@ Run
 from this path to install the service on your computer.<br>
 <br>
 To configure a VM to start as a service use the vboxmanage command with<br>
-the setextradata options with key Service and value yes. Example:
+the setextradata options with key Service and value yes. For example if you<br>
+want to start the VM named OpenBSD by the service type:
 <code>vboxmanage setextradata OpenBSD Service yes</code>.<br>
 
 = Uninstall vbservice =
