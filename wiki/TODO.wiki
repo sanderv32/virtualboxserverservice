@@ -11,3 +11,4 @@ There are still some basic things missing in the current version, which needs to
 ===Service===
   * Option needed to tell the service howto shutdown a VM. Default at the moment is savestate.
   * The service is not using all the new options of the current Windows version (like powersave etc). Implement all the new features.
+  * Automatic assign VRDP ports to VM machines.
