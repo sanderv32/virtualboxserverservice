@@ -1,5 +1,0 @@
-#summary Setup commandline switches
-
-= Setup commandline switches =
-
-The setup is based on [http://www.jrsoftware.org/isinfo.php Inno Setup]. You can find all commandline switches at [http://unattended.sourceforge.net/InnoSetup_Switches_ExitCodes.html this] page.
