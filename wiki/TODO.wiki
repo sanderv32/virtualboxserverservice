@@ -1,5 +1,5 @@
 #summary Things TODO in feature versions
-#labels Phase-Implementation
+#labels Phase-Implementation,Featured
 = TODO =
 There are still some basic things missing in the current version, which needs to be done in feature versions. Here some features for the new versions:
 
