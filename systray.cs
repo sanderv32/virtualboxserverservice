@@ -202,8 +202,17 @@ namespace VBoxService
 		/// <param name="e"></param>
 		private void contextConsole(object Sender, EventArgs e)
 		{
+			MenuItem selected = (MenuItem)Sender;
+			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
+			ASCIIEncoding encoding = new ASCIIEncoding();
+			Byte[] bytes = encoding.GetBytes("vrdp "+selected.Parent.Tag);
 #if DEBUG
 			Console.WriteLine("Console clicked");
+#endif
+			this.Send(bytes);
+#if DEBUG
+			int port = bytes[0]+256*bytes[1];
+			Console.WriteLine("Server send port {0} to connect to",port);
 #endif
 		}
 
@@ -221,19 +230,7 @@ namespace VBoxService
 #if DEBUG
 			Console.WriteLine("Start clicked");
 #endif	
-			using (NamedPipeClientStream pipeStream = new NamedPipeClientStream(pipeName.ToString()))
-			{
-				try {
-					pipeStream.Connect(pipetimeout);
-					pipeStream.ReadMode = PipeTransmissionMode.Message;
-					//if (pipeStream.IsConnected)
-						pipeStream.Write(bytes, 0, bytes.Length);
-				} catch(Exception err) {
-#if DEBUG
-					Console.WriteLine(err.ToString());
-#endif
-				}
-			}
+			this.Send(bytes);
 		}
 		
 		/// <summary>
@@ -251,19 +248,24 @@ namespace VBoxService
 #if DEBUG
 			Console.WriteLine("Stop clicked {0}",machine.State);
 #endif				
+			this.Send(bytes);
+		}
+		
+		private void Send(Byte[] buffer)
+		{
 			using (NamedPipeClientStream pipeStream = new NamedPipeClientStream(pipeName.ToString()))
 			{
 				try {
 					pipeStream.Connect(pipetimeout);
 					pipeStream.ReadMode = PipeTransmissionMode.Message;
 					//if (pipeStream.IsConnected)
-						pipeStream.Write(bytes, 0, bytes.Length);
+						pipeStream.Write(buffer, 0, buffer.Length);
+						pipeStream.Read(buffer, 0, buffer.Length);
 				} catch(Exception err) {
 #if DEBUG
 					Console.WriteLine(err.ToString());
 #endif
 				}
-
 			}
 		}
 	}

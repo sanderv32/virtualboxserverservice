@@ -28,6 +28,7 @@ using System.Text;
 using System.Threading;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.ServiceProcess;
 using System.Runtime.InteropServices;
@@ -41,7 +42,8 @@ namespace VBoxService
 	sealed class VBoxService : ServiceBase
 	{
 		private Thread t;
-		private Array machines;
+		private VirtualBox.IMachine[] machines;
+		private Dictionary<string, VirtualBox.IRemoteDisplayInfo> display=new Dictionary<string,VirtualBox.IRemoteDisplayInfo>();
 		private bool isStopped = false;
 		private VirtualBox.VirtualBox vbox;
 		private System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
@@ -69,7 +71,7 @@ namespace VBoxService
 			this.CanStop = true;
 			
 			vbox = new VirtualBox.VirtualBox();
-			machines = (Array)vbox.Machines;
+			machines = vbox.Machines;			
 		}
 
 		/// <summary>
@@ -121,6 +123,7 @@ namespace VBoxService
 					try {
 						VirtualBox.IProgress progress = m.Parent.OpenRemoteSession(session, m.Id, "vrdp", "");
 						progress.WaitForCompletion(-1);
+						this.display.Add(uuid, session.Console.RemoteDisplayInfo);
 					} catch (Exception e) {
 						this.EventLog.WriteEntry(String.Format("Error starting VM {0} ({1})\r\n\r\n{2}",m.Name,m.Id,e.ToString()),EventLogEntryType.Error);
 					}
@@ -144,6 +147,7 @@ namespace VBoxService
 						m.Parent.OpenExistingSession(session, m.Id);
 						session.Console.PowerDown().WaitForCompletion(-1);
 						session.Close();
+						this.display.Remove(uuid);
 					} catch (Exception e) {
 						this.EventLog.WriteEntry(String.Format("Error stopping VM {0} ({1})\r\n\r\n{2}\r\n\r\n{3}",m.Name,m.Id,e.ToString(),m.State),EventLogEntryType.Error);
 					}
@@ -160,16 +164,7 @@ namespace VBoxService
 			foreach(VirtualBox.IMachine m in machines) {
 				string xtrakeys = m.GetExtraData(this.extradatakey.ToString());
 				if (xtrakeys.ToLower() == "yes") {
-					if (m.State==VirtualBox.MachineState.MachineState_PoweredOff || m.State==VirtualBox.MachineState.MachineState_Saved) {
-						this.EventLog.WriteEntry(String.Format("Starting VM {0} ({1})",m.Name,m.Id));
-						VirtualBox.Session session = new VirtualBox.Session();
-						try {
-							VirtualBox.IProgress progress = m.Parent.OpenRemoteSession(session, m.Id, "vrdp", "");
-							progress.WaitForCompletion(-1);
-						} catch (Exception e) {
-							this.EventLog.WriteEntry(String.Format("Error starting VM {0} ({1})\r\n\r\n{2}",m.Name,m.Id,e.ToString()),EventLogEntryType.Error);
-						}
-					}
+					this.startvm(m.Id);
 				}
 			}
 		}
@@ -183,17 +178,7 @@ namespace VBoxService
 			foreach(VirtualBox.IMachine m in machines) {
 				string xtrakeys = m.GetExtraData(this.extradatakey.ToString());
 				if (xtrakeys.ToLower() == "yes") {
-					if (m.State==VirtualBox.MachineState.MachineState_Running) {
-						this.EventLog.WriteEntry(String.Format("Stopping VM {0} ({1})",m.Name,m.Id));
-						VirtualBox.Session session = new VirtualBox.Session();
-						try {
-							m.Parent.OpenExistingSession(session, m.Id);
-							session.Console.PowerDown().WaitForCompletion(-1);
-							session.Close();
-						} catch (Exception e) {
-							this.EventLog.WriteEntry(String.Format("Error stopping VM {0} ({1})\r\n\r\n{2}\r\n\r\n{3}",m.Name,m.Id,e.ToString(),m.State),EventLogEntryType.Error);
-						}
-					}
+					this.stopvm(m.Id);
 				}
 			}
 		}
@@ -358,30 +343,46 @@ namespace VBoxService
 		/// </summary>
 		public void Start()
 		{
-			Byte[] bytes = new Byte[64];
-			ASCIIEncoding encoding = new ASCIIEncoding();
 			
 			this.startvms();
 			while(!this.isStopped)
 			{
 				using (pipeStream = new NamedPipeServerStream(pipeName.ToString(),PipeDirection.InOut,1,PipeTransmissionMode.Message,PipeOptions.None))
 				{
+					Byte[] bytes = new Byte[64];
+					ASCIIEncoding encoding = new ASCIIEncoding();
+
 					pipeStream.WaitForConnection();
 					
 					pipeStream.Read(bytes, 0, bytes.Length);
-					string strMachine = encoding.GetString(bytes,5,64-5).TrimEnd('\0');
+					string strMachine = encoding.GetString(bytes,5,bytes.Length-5).TrimEnd('\0');
 					switch (encoding.GetString(bytes).ToLower().Substring(0,5)) {
+						// Start VM
 						case "start":
 #if DEBUG
 							Console.WriteLine("Received start for machine {0}",strMachine);
 #endif
 							this.startvm(strMachine);
 							break;
+						// Stop VM
 						case "stop ":
 #if DEBUG
 							Console.WriteLine("Received stop for machine {0}",strMachine);
 #endif
 							this.stopvm(strMachine);
+							break;
+						case "vrdp ":
+#if DEBUG
+							Console.WriteLine("Received vrdp for machine {0}", strMachine);
+#endif
+							try {
+								bytes=BitConverter.GetBytes(display[strMachine].Port);
+								pipeStream.Write(bytes, 0, 2);
+#if DEBUG
+								this.EventLog.WriteEntry(string.Format("Key={0}, Port={1}",strMachine,display[strMachine].Port));
+#endif
+							} catch {
+							}
 							break;
 						default:
 							
