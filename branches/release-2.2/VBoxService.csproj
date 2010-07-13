@@ -22,7 +22,7 @@
     <RunSourceAnalysis>False</RunSourceAnalysis>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice.iss"</PostBuildEvent>
-    <StartArguments>-console</StartArguments>
+    <StartArguments>-tray</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
