@@ -388,11 +388,11 @@ namespace VBoxService
 							
 							break;
 					}
-					pipeStream.Close();
-					pipeStream.Dispose();
 				
 					//Thread.Sleep(1000);
 				}
+				pipeStream.Close();
+				pipeStream.Dispose();
 			}
 		}
 	}

@@ -47,11 +47,16 @@ namespace VBoxService
 		private StringBuilder pipeName;
 		private virtualboxcallback vboxcallback;
 		private System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
+		private VBoxSSIPC ipcs;
 				
 		public SysTrayIcon()
 		{
+			Byte[] bytes= new Byte[64];
 			this.extradatakey = new StringBuilder(resources.GetString("VBoxService.ExtraDataKey"));
 			this.pipeName = new StringBuilder(resources.GetString("Pipe.Name"));
+			this.ipcs = new VBoxSSIPC(resources.GetString("Pipe.Name").ToString());
+			this.ipcs.pipetimeout = pipetimeout;
+			
 			vbox = new VirtualBox.VirtualBox();
 			vboxcallback = new virtualboxcallback(this);
 			vbox.RegisterCallback(vboxcallback);
@@ -62,7 +67,9 @@ namespace VBoxService
 				menu.Name = vbox.Machines[i].Name;
 				menu.Tag = vbox.Machines[i].Id;
 				
-				this.addSubItems(menu, vbox.Machines[i].GetExtraData(this.extradatakey.ToString()).ToLower()=="yes"?true:false);
+				ipcs.SendAndReceive("vrdp "+vbox.Machines[i].Id,bytes);
+				int port = BitConverter.ToInt16(bytes,0);
+				this.addSubItems(menu, vbox.Machines[i].GetExtraData(this.extradatakey.ToString()).ToLower()=="yes"?true:false,port>0?true:false);
 				this.menuitem.MenuItems.Add(menu);
 			}
 			this.menuitem.MenuItems.Add("-");
@@ -81,21 +88,21 @@ namespace VBoxService
 		/// </summary>
 		/// <param name="m">MenuItem to add submenus to.</param>
 		/// <param name="asService">Extradata is set to run as Service</param>
-		private void addSubItems(MenuItem m, bool asService)
-		{
+		private void addSubItems(MenuItem m, bool asService, bool hasConsole)
+		{			
 			MenuItem subItem = new MenuItem();
 			subItem.Text = subItem.Name = "Console";
-			subItem.Visible = asService;
+			subItem.Enabled = asService;
 			subItem.Click += contextConsole;
 			m.MenuItems.Add(subItem);
 			subItem = new MenuItem();
 			subItem.Text = subItem.Name = "Start";
-			subItem.Visible = asService;
+			subItem.Enabled = asService;
 			subItem.Click += contextStart;
 			m.MenuItems.Add(subItem);
 			subItem = new MenuItem();
 			subItem.Text = subItem.Name = "Stop";
-			subItem.Visible = asService;
+			subItem.Enabled = asService;
 			subItem.Click += contextStop;
 			m.MenuItems.Add(subItem);
 			subItem = new MenuItem();
@@ -127,7 +134,8 @@ namespace VBoxService
 				MenuItem menu = new MenuItem(vbox.GetMachine(uuid).Name);
 				//menu.Click += contextClick;
 				menu.Tag = uuid;
-				this.addSubItems(menu,false);
+				
+				this.addSubItems(menu,false,false);
 				
 				this.menuitem.MenuItems.Add(index,menu);
 			} else {
@@ -185,9 +193,9 @@ namespace VBoxService
 			Console.WriteLine(selected.Parent.Tag);
 #endif
 			selected.Checked = selected.Checked ? false: true;
-			MenuItem[] t = selected.Parent.MenuItems.Find("Start",false); t[0].Visible = selected.Checked;		// Enable/disable Start
-			t = selected.Parent.MenuItems.Find("Stop",false); t[0].Visible = selected.Checked;					// Enable/disable Stop
-			t = selected.Parent.MenuItems.Find("Console",false); t[0].Visible = selected.Checked;					// Enable/disable Console
+			MenuItem[] t = selected.Parent.MenuItems.Find("Start",false); t[0].Enabled = selected.Checked;		// Enable/disable Start
+			t = selected.Parent.MenuItems.Find("Stop",false); t[0].Enabled = selected.Checked;					// Enable/disable Stop
+			t = selected.Parent.MenuItems.Find("Console",false); t[0].Enabled = selected.Checked;					// Enable/disable Console
 			machine = vbox.GetMachine((string)selected.Parent.Tag);
 			if (selected.Checked)
 				machine.SetExtraData(this.extradatakey.ToString(), "yes");
@@ -204,15 +212,12 @@ namespace VBoxService
 		{
 			MenuItem selected = (MenuItem)Sender;
 			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
-			ASCIIEncoding encoding = new ASCIIEncoding();
-			Byte[] bytes = encoding.GetBytes("vrdp "+selected.Parent.Tag);
+			Byte[] bytes = new Byte[64];
+
+			ipcs.SendAndReceive("vrdp "+selected.Parent.Tag,bytes);
 #if DEBUG
-			Console.WriteLine("Console clicked");
-#endif
-			this.Send(bytes);
-#if DEBUG
-			int port = bytes[0]+256*bytes[1];
-			Console.WriteLine("Server send port {0} to connect to",port);
+			int port = BitConverter.ToInt16(bytes,0);
+			Console.WriteLine("Server send port {0} to connect too",port);
 #endif
 		}
 
@@ -225,12 +230,10 @@ namespace VBoxService
 		{
 			MenuItem selected = (MenuItem)Sender;
 			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
-			ASCIIEncoding encoding = new ASCIIEncoding();
+/*			ASCIIEncoding encoding = new ASCIIEncoding();
 			Byte[] bytes = encoding.GetBytes("start"+selected.Parent.Tag);
-#if DEBUG
-			Console.WriteLine("Start clicked");
-#endif	
-			this.Send(bytes);
+			this.Send(bytes);*/
+			ipcs.SendMessage("start"+selected.Parent.Tag);
 		}
 		
 		/// <summary>
@@ -242,13 +245,10 @@ namespace VBoxService
 		{
 			MenuItem selected = (MenuItem)Sender;
 			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
-			ASCIIEncoding encoding = new ASCIIEncoding();
+/*			ASCIIEncoding encoding = new ASCIIEncoding();
 			Byte[] bytes = encoding.GetBytes("stop "+selected.Parent.Tag);
-
-#if DEBUG
-			Console.WriteLine("Stop clicked {0}",machine.State);
-#endif				
-			this.Send(bytes);
+			this.Send(bytes);*/
+			ipcs.SendMessage("stop "+selected.Parent.Tag);
 		}
 		
 		private void Send(Byte[] buffer)
@@ -268,5 +268,84 @@ namespace VBoxService
 				}
 			}
 		}
+	}
+	
+	/// <summary>
+	/// IPC to Service
+	/// </summary>
+	public class VBoxSSIPC {
+		private NamedPipeClientStream pipeStream;
+		public int pipetimeout=5000;
+		public string pipename;
+		
+		public VBoxSSIPC(string name)
+		{
+			this.pipename = name;
+		}
+		
+		~VBoxSSIPC()
+		{
+			this.pipeStream.Close();
+		}
+		
+		
+		private void Connect()
+		{
+			this.pipeStream = new NamedPipeClientStream(this.pipename);
+			this.pipeStream.Connect(this.pipetimeout);
+		}
+		
+		public void Send(Byte[] buffer)
+		{
+			try {
+				this.Connect();
+				this.pipeStream.ReadMode = PipeTransmissionMode.Message;
+				this.pipeStream.Write(buffer, 0, buffer.Length);
+			} catch(Exception err) {
+#if DEBUG
+				Console.WriteLine(err.ToString());
+#endif
+			}
+		}
+		
+		public void SendMessage(string message)
+		{
+			Byte[] buffer = new Byte[64];
+			ASCIIEncoding encoding = new ASCIIEncoding();
+			Byte[] bytes = encoding.GetBytes(message);
+
+			using (this.pipeStream) {
+				try {
+					this.Connect();
+					this.pipeStream.ReadMode = PipeTransmissionMode.Message;
+					this.pipeStream.Write(bytes, 0, bytes.Length);
+				} catch(Exception err) {
+#if DEBUG
+					Console.WriteLine(err.ToString());
+#endif
+				}
+			}
+		}
+			
+		public void SendAndReceive(string message, Byte[] result)
+		{
+			Byte[] buffer = new Byte[64];
+			ASCIIEncoding encoding = new ASCIIEncoding();
+			Byte[] bytes = encoding.GetBytes(message);
+
+			using (this.pipeStream) {
+				try {
+					this.Connect();
+					this.pipeStream.ReadMode = PipeTransmissionMode.Message;
+					this.pipeStream.Write(bytes, 0, bytes.Length);
+					this.pipeStream.Read(result, 0, result.Length);
+				} catch(Exception err) {
+#if DEBUG
+					Console.WriteLine(err.ToString());
+#endif
+				}
+			}
+		}
+
 	}
 }
