@@ -377,7 +377,8 @@ namespace VBoxService
 #endif
 							try {
 								bytes=BitConverter.GetBytes(display[strMachine].Port);
-								pipeStream.Write(bytes, 0, 2);
+								Buffer.BlockCopy(BitConverter.GetBytes(display[strMachine].Active),0,bytes,2,2);
+								pipeStream.Write(bytes, 0, 4);
 #if DEBUG
 								this.EventLog.WriteEntry(string.Format("Key={0}, Port={1}",strMachine,display[strMachine].Port));
 #endif
