@@ -39,7 +39,7 @@ namespace VBoxService
 	/// </summary>
 	public class SysTrayIcon : ApplicationContext
 	{
-		private const int pipetimeout = 5*1000;
+		private const int pipetimeout = 5*100;
 		private NotifyIcon notifyIcon;
 		private VirtualBox.VirtualBox vbox;
 		private System.Windows.Forms.ContextMenu menuitem;
@@ -215,10 +215,20 @@ namespace VBoxService
 			Byte[] bytes = new Byte[64];
 
 			ipcs.SendAndReceive("vrdp "+selected.Parent.Tag,bytes);
-#if DEBUG
 			int port = BitConverter.ToInt16(bytes,0);
+			bool alreadyConnected = BitConverter.ToBoolean(bytes,2);
+#if DEBUG
 			Console.WriteLine("Server send port {0} to connect too",port);
 #endif
+			if (port > 0 && !alreadyConnected) {
+				ProcessStartInfo mstsc = new ProcessStartInfo();
+				mstsc.FileName = "mstsc.exe";
+				mstsc.Arguments = "/v 127.0.0.1:"+port.ToString();
+				mstsc.ErrorDialog = true;
+				
+				Process process = Process.Start(mstsc);
+			}
+				
 		}
 
 		/// <summary>
