@@ -46,7 +46,7 @@
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;BETA</DefineConstants>
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
