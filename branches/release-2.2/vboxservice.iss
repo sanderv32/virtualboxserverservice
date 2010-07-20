@@ -34,8 +34,10 @@ WizardSmallImageFile=C:\Program Files\Inno Setup 5\WizModernSmallImage-IS.bmp
 DisableProgramGroupPage=true
 [Run]
 Filename: {app}\VBoxService.exe; Parameters: -install; WorkingDir: {app}; StatusMsg: Installing service; Flags: runhidden
+Filename: {sys}\schtasks.exe; Parameters: "/create /tn ""Virtualbox Service Server"" /tr ""\""{app}\VBoxService.exe\"" -tray"" /sc onlogon /rl highest /delay 0000:30"; WorkingDir: {sys}; StatusMsg: Creating scheduled task; MinVersion: 0,6.0.6000; Flags: runhidden
 [UninstallRun]
 Filename: {app}\VBoxService.exe; Parameters: -uninstall; WorkingDir: {app}; Flags: runhidden
+Filename: {sys}\schtasks.exe; Parameters: "/tn ""Virtualbox Service Server"""; WorkingDir: {sys}; MinVersion: 0,6.0.6000; Flags: runhidden
 [Icons]
 Name: {userstartup}\VirtualBox Server Service Trayicon; Filename: {app}\VBoxService.exe; Parameters: -tray; WorkingDir: {app}; IconFilename: {app}\VBoxService.exe; Comment: Virtualbox Server Service Trayicon; Flags: runminimized; OnlyBelowVersion: 0,6.0.6000
 [Code]
