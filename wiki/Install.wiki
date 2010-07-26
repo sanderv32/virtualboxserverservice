@@ -1,7 +1,9 @@
 #summary Install vbservice
-#labels Featured
 
-= Howto install/configure vbservice =
+_Read this only if you want to install this service manually.<br>
+If you download the setup, you don't have to read this!!_<br>
+
+= Howto install/configure vbservice manually =
 
 For this service .NET 4 is used. You can download this from the Microsoft website.<br>
 <br>
