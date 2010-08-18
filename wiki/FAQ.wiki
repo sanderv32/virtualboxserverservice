@@ -1,0 +1,8 @@
+#summary Frequently Asked Questions
+#labels Featured
+
+_*Q: I have installed the program, but after checking a VM it won't start automatic*_<br>
+_A: Try to put the following global environment variable VBOX_USER_HOME=<path to your virtualbox.xml>\_<br>
+<br>
+_*Q: If i try to install the service with the switch -install, it gives an error*_<br>
+_A: If you have downloaded the setup it will do this automatic during setup_<br>
