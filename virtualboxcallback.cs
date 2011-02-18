@@ -26,15 +26,18 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using vboxEDCCE = VirtualBox.IExtraDataCanChangeEvent;
+using vboxMRE = VirtualBox.IMachineRegisteredEvent;
 
 namespace VBoxService
 {
 	/// <summary>
 	/// Description of virtualboxcallback.
 	/// </summary>
-	public class virtualboxcallback : VirtualBox.IVirtualBoxCallback
+	public class virtualboxcallback : VirtualBox.IEventListener
 	{	
 		private SysTrayIcon systraycb;
+		
 		
 		/// <summary>
 		/// Constructor
@@ -50,53 +53,20 @@ namespace VBoxService
 		~virtualboxcallback()
 		{
 		}
-		
-		public int OnExtraDataCanChange(string uuid, string key, string val, out string error)
-		{
-			error="";
-			return 1;
-		}
-		
-		public void OnExtraDataChange(string uuid, string key, string val)
-		{
-		}
-		
-		public void OnGuestPropertyChange(string uuid, string name, string val, string flags)
-		{
-		}
-		
-		public void OnMachineDataChange(string uuid)
-		{
-		}
-		
-		public void OnMachineRegistered(string uuid, int registered)
-		{
-			systraycb.ChkMenuItem(uuid, registered);
-		}
-	
-		public void OnMachineStateChange(string uuid, VirtualBox.MachineState state)
-		{
-		}
-		
-		public void OnMediumRegistered(string uuid, VirtualBox.DeviceType mediumtype, int registered)
-		{
-		}
-		
-		public void OnSessionStateChange(string uuid, VirtualBox.SessionState state)
-		{
-		}
-		
-		public void OnSnapshotChange(string uuid, string snapuuid)
-		{
-		}
-		
-		public void OnSnapshotDeleted(string uuid, string snapuuid)
-		{
-		}
-		
-		public void OnSnapshotTaken(string uuid, string snapuuid)
-		{
-		}
-		
+					
+		public void HandleEvent(VirtualBox.IEvent ev) {
+			if (ev.Type == VirtualBox.VBoxEventType.VBoxEventType_OnExtraDataCanChange) {
+				/* Old code below
+ 				public int OnExtraDataCanChange(string uuid, string key, string val, out string error)
+				{
+					error="";
+					return 1;
+				}*/
+			}
+			if (ev.Type == VirtualBox.VBoxEventType.VBoxEventType_OnMachineRegistered) {
+				systraycb.ChkMenuItem(((vboxMRE)ev).MachineId.ToString(),
+				                      ((vboxMRE)ev).Registered);
+			}
+		}		
 	}
 }

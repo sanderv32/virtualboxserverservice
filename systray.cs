@@ -45,7 +45,10 @@ namespace VBoxService
 		private System.Windows.Forms.ContextMenu menuitem;
 		private StringBuilder extradatakey;
 		private StringBuilder pipeName;
-		private virtualboxcallback vboxcallback;
+		private VirtualBox.IEventSource es;
+		private virtualboxcallback el;
+		private VirtualBox.VBoxEventType[] atypes = {VirtualBox.VBoxEventType.VBoxEventType_OnExtraDataCanChange,
+														VirtualBox.VBoxEventType.VBoxEventType_OnMachineRegistered};
 		private System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
 		private VBoxSSIPC ipcs;
 				
@@ -58,8 +61,9 @@ namespace VBoxService
 			this.ipcs.pipetimeout = pipetimeout;
 			
 			vbox = new VirtualBox.VirtualBox();
-			vboxcallback = new virtualboxcallback(this);
-			vbox.RegisterCallback(vboxcallback);
+			es = vbox.EventSource;
+			el = new virtualboxcallback(this);
+			es.RegisterListener(el, atypes, 1);
 			
 			this.menuitem = new System.Windows.Forms.ContextMenu();
 			for(int i=0; i<((Array)vbox.Machines).Length;i++) {
@@ -131,7 +135,7 @@ namespace VBoxService
 					if (this.menuitem.MenuItems[index].Text=="-") break;
 				}
 				
-				MenuItem menu = new MenuItem(vbox.GetMachine(uuid).Name);
+				MenuItem menu = new MenuItem(vbox.FindMachine(uuid).Name);
 				//menu.Click += contextClick;
 				menu.Tag = uuid;
 				
@@ -151,6 +155,7 @@ namespace VBoxService
 		public void Run()
 		{
 			Application.Run();
+			es.UnregisterListener(el);
 		}
 		
 		/// <summary>
@@ -196,7 +201,7 @@ namespace VBoxService
 			MenuItem[] t = selected.Parent.MenuItems.Find("Start",false); t[0].Enabled = selected.Checked;		// Enable/disable Start
 			t = selected.Parent.MenuItems.Find("Stop",false); t[0].Enabled = selected.Checked;					// Enable/disable Stop
 			t = selected.Parent.MenuItems.Find("Console",false); t[0].Enabled = selected.Checked;					// Enable/disable Console
-			machine = vbox.GetMachine((string)selected.Parent.Tag);
+			machine = vbox.FindMachine((string)selected.Parent.Tag);
 			if (selected.Checked)
 				machine.SetExtraData(this.extradatakey.ToString(), "yes");
 			else 
@@ -211,7 +216,7 @@ namespace VBoxService
 		private void contextConsole(object Sender, EventArgs e)
 		{
 			MenuItem selected = (MenuItem)Sender;
-			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
+			VirtualBox.IMachine machine = vbox.FindMachine((string)selected.Parent.Tag);
 			Byte[] bytes = new Byte[64];
 
 			ipcs.SendAndReceive("vrdp "+selected.Parent.Tag,bytes);
@@ -239,7 +244,7 @@ namespace VBoxService
 		private void contextStart(object Sender, EventArgs e)
 		{
 			MenuItem selected = (MenuItem)Sender;
-			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
+			VirtualBox.IMachine machine = vbox.FindMachine((string)selected.Parent.Tag);
 /*			ASCIIEncoding encoding = new ASCIIEncoding();
 			Byte[] bytes = encoding.GetBytes("start"+selected.Parent.Tag);
 			this.Send(bytes);*/
@@ -254,7 +259,7 @@ namespace VBoxService
 		private void contextStop(object Sender, EventArgs e)
 		{
 			MenuItem selected = (MenuItem)Sender;
-			VirtualBox.IMachine machine = vbox.GetMachine((string)selected.Parent.Tag);
+			VirtualBox.IMachine machine = vbox.FindMachine((string)selected.Parent.Tag);
 /*			ASCIIEncoding encoding = new ASCIIEncoding();
 			Byte[] bytes = encoding.GetBytes("stop "+selected.Parent.Tag);
 			this.Send(bytes);*/

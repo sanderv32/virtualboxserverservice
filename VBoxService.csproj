@@ -23,6 +23,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice.iss"</PostBuildEvent>
     <StartArguments>-tray</StartArguments>
+    <PreBuildEvent>"c:\program files\tlbimp2\tlbimp2.exe" /machine:Agnostic "$(SolutionDir)VirtualBox.tlb" /out:"$(SolutionDir)VirtualBox.dll" /silent</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
