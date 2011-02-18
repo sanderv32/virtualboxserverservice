@@ -1,7 +1,7 @@
 ;#pragma option -v+
 ;#pragma verboselevel 9
 
-#define SrcPath "d:\temp\vb4service2\bin\Debug"
+#define SrcPath "d:\temp\vb4service2\bin\Release"
 #define AppVer GetFileVersion(AddBackslash(SrcPath)+"\VBoxService.exe")
 #define CopyRight GetFileCopyright(AddBackslash(SrcPath)+"\VBoxService.exe")
 #define Company GetFileCompany(AddBackslash(SrcPath)+"\VBoxService.exe")

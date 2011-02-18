@@ -52,7 +52,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can use the default the Revision and 
 // Build Numbers by using the '*' as shown below:
 #if BETA
-[assembly: AssemblyVersion("2.2.0.*")]
+[assembly: AssemblyVersion("2.3.0.*")]
 #else
-[assembly: AssemblyVersion("2.2.1.*")]
+[assembly: AssemblyVersion("3.0.0.*")]
 #endif
