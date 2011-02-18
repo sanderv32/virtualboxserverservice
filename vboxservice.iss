@@ -1,7 +1,7 @@
 ;#pragma option -v+
 ;#pragma verboselevel 9
 
-#define SrcPath "C:\temp\vbservice\bin\Release"
+#define SrcPath "d:\temp\vb4service2\bin\Debug"
 #define AppVer GetFileVersion(AddBackslash(SrcPath)+"\VBoxService.exe")
 #define CopyRight GetFileCopyright(AddBackslash(SrcPath)+"\VBoxService.exe")
 #define Company GetFileCompany(AddBackslash(SrcPath)+"\VBoxService.exe")
@@ -22,7 +22,7 @@ AppName=Virtualbox Server Service
 VersionInfoTextVersion={#AppVer}
 VersionInfoProductVersion={#AppVer}
 AppVerName=Virtualbox Server Service ({#AppVer})
-OutputDir=C:\temp\vbservice
+OutputDir=d:\temp\vb4service2
 SourceDir={#SrcPath}
 OutputBaseFilename=VBoxService-setup_{#AppVer}
 VersionInfoCopyright={#CopyRight}
