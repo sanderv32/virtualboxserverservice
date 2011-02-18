@@ -1263,4 +1263,7 @@ Alexander Verhaar</value>
         //////////////////////////////////8=
 </value>
   </data>
+  <data name="Pipe.Name" xml:space="preserve">
+    <value>vboxMessPipe</value>
+  </data>
 </root>

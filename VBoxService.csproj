@@ -22,6 +22,7 @@
     <RunSourceAnalysis>False</RunSourceAnalysis>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice.iss"</PostBuildEvent>
+    <StartArguments>-tray</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,7 +35,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>Full</DebugType>
-    <Optimize>True</Optimize>
+    <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <StartAction>Project</StartAction>
@@ -45,7 +46,7 @@
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;BETA</DefineConstants>
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
