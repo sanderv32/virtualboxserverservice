@@ -43,7 +43,7 @@ namespace VBoxService
 	{
 		private Thread t;
 		private VirtualBox.IMachine[] machines;
-		private Dictionary<string, VirtualBox.IRemoteDisplayInfo> display=new Dictionary<string,VirtualBox.IRemoteDisplayInfo>();
+		private Dictionary<string, VirtualBox.IVRDEServerInfo> display=new Dictionary<string,VirtualBox.IVRDEServerInfo>();
 		private bool isStopped = false;
 		private VirtualBox.VirtualBox vbox;
 		private System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VBoxService));
@@ -114,16 +114,16 @@ namespace VBoxService
 		/// <param name="uuid">UUID of machine to start</param>
 		private void startvm(string uuid)
 		{
-			VirtualBox.IMachine m = vbox.GetMachine(uuid);
+			VirtualBox.IMachine m = vbox.FindMachine(uuid);
 			string xtrakeys = m.GetExtraData(this.extradatakey.ToString());
 			if (xtrakeys.ToLower() == "yes") {
 				if (m.State==VirtualBox.MachineState.MachineState_PoweredOff || m.State==VirtualBox.MachineState.MachineState_Saved) {
 					this.EventLog.WriteEntry(String.Format("Starting VM {0} ({1})",m.Name,m.Id));
 					VirtualBox.Session session = new VirtualBox.Session();
 					try {
-						VirtualBox.IProgress progress = m.Parent.OpenRemoteSession(session, m.Id, "vrdp", "");
+						VirtualBox.IProgress progress = m.LaunchVMProcess(session, "vrdp", "");
 						progress.WaitForCompletion(-1);
-						this.display.Add(uuid, session.Console.RemoteDisplayInfo);
+						this.display.Add(uuid, session.Console.VRDEServerInfo);
 					} catch (Exception e) {
 						this.EventLog.WriteEntry(String.Format("Error starting VM {0} ({1})\r\n\r\n{2}",m.Name,m.Id,e.ToString()),EventLogEntryType.Error);
 					}
@@ -137,16 +137,16 @@ namespace VBoxService
 		/// <param name="uuid">UUID of machine to stop</param>
 		private void stopvm(string uuid)
 		{
-			VirtualBox.IMachine m = vbox.GetMachine(uuid);
+			VirtualBox.IMachine m = vbox.FindMachine(uuid);
 			string xtrakeys = m.GetExtraData(this.extradatakey.ToString());
 			if (xtrakeys.ToLower() == "yes") {
 				if (m.State==VirtualBox.MachineState.MachineState_Running) {
 					this.EventLog.WriteEntry(String.Format("Stopping VM {0} ({1})",m.Name,m.Id));
 					VirtualBox.Session session = new VirtualBox.Session();
 					try {
-						m.Parent.OpenExistingSession(session, m.Id);
+						m.LockMachine(session, VirtualBox.LockType.LockType_Shared);
 						session.Console.PowerDown().WaitForCompletion(-1);
-						session.Close();
+						session.UnlockMachine();
 						this.display.Remove(uuid);
 					} catch (Exception e) {
 						this.EventLog.WriteEntry(String.Format("Error stopping VM {0} ({1})\r\n\r\n{2}\r\n\r\n{3}",m.Name,m.Id,e.ToString(),m.State),EventLogEntryType.Error);
