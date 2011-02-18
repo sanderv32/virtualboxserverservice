@@ -21,7 +21,6 @@
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <RunSourceAnalysis>False</RunSourceAnalysis>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice.iss"</PostBuildEvent>
     <StartArguments>-tray</StartArguments>
     <PreBuildEvent>"c:\program files\tlbimp2\tlbimp2.exe" /machine:Agnostic "$(SolutionDir)VirtualBox.tlb" /out:"$(SolutionDir)VirtualBox.dll" /silent</PreBuildEvent>
   </PropertyGroup>
@@ -38,8 +37,9 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;BETA</DefineConstants>
     <StartAction>Project</StartAction>
+    <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice-debug.iss"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -47,8 +47,9 @@
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <DefineConstants>TRACE;BETA</DefineConstants>
+    <DefineConstants>TRACE;</DefineConstants>
     <StartAction>Project</StartAction>
+    <PostBuildEvent>"c:\Program Files\Inno Setup 5\iscc.exe" "$(SolutionDir)vboxservice.iss"</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

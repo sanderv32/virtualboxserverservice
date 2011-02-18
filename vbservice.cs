@@ -220,14 +220,10 @@ namespace VBoxService
 					vb.Start();
 				} else 	if (args[0] == "-tray") {
 						Console.Title = "VirtualBox Server Service TrayIcon";
-#if !DEBUG
 						ShowWindow(ThisConsole, HIDE);
-#endif
 						SysTrayIcon systrayicon = new SysTrayIcon();
 						systrayicon.Run();
-#if DEBUG
 						ShowWindow(ThisConsole, RESTORE);
-#endif
 					}
 			} else	{
 				ServiceBase.Run(new VBoxService());

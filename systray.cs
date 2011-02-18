@@ -32,6 +32,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.IO.Pipes;
 
+#pragma warning disable 168
 namespace VBoxService
 {
 	/// <summary>
